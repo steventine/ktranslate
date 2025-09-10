@@ -249,3 +249,44 @@ To view all available profiles, open http://localhost:6060/debug/pprof/ in your 
 
 This product includes GeoLite2 data created by MaxMind, available from
 <a href="https://www.maxmind.com">https://www.maxmind.com</a>.
+
+
+# Raw logs
+
+New Relic [API](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/)
+
+From 10:59 EDT (22:59, or 02:59Z)
+
+Raw syslog is: 
+```{"tags.container_service":"hp-lap-home-assistant-hassio","plugin.type":"ktranslate-syslog","facility":1,"hostname":"1677980071fe","priority":14,"severity":6,"device_name":"stine-island","instrumentation.name":"ktranslate-syslog","timestamp":"2025-09-08T22:59:58Z","tag":"pe-dhcp","client":"172.17.0.1:44008","message":"en0 sending DISCOVER"}```
+
+Raw non-syslog (i.e. container log) is: 
+```2025-09-09T02:59:58.689 ktranslate/hp-lap-home-assistant-hassio [Info] Syslog thread 1 running```
+
+# Building modified container
+
+## Build ktranslate
+
+From ~/src/ktranslate
+
+`docker build -t stevent111/steventine-ktranslate:latest .`
+
+### Push to Docker Hub
+
+Assuming a repository of `stevent111`:
+
+`docker push stevent111/steventine-ktranslate:latest`
+
+## Build an HA addon container
+
+From ~/island-syslog
+
+`docker build -t ktranslate_modded_addon:latest -f Dockerfile.moded_ktranslate .`
+
+## Run the docker image:
+
+```
+docker run -d --name ktranslate-moded \
+  -p 514:5143/udp \
+  ktranslate_modded_addon:latest 
+```

@@ -1,3 +1,6 @@
+#This is the base ktranslate image that we'll use to get Maxmind DB
+FROM kentik/ktranslate:v2 as ktranslate_base
+
 # build ktranslate
 FROM golang:1.23-alpine as build
 RUN apk add -U libpcap-dev alpine-sdk bash libcap
@@ -5,19 +8,6 @@ COPY . /src
 WORKDIR /src
 ARG KENTIK_KTRANSLATE_VERSION
 RUN make
-
-# maxmind dbs
-FROM alpine:latest as maxmind
-ARG MAXMIND_LICENSE_KEY
-ARG YOUR_ACCOUNT_ID
-RUN apk add -U curl tar
-ENV GEOLITE2_COUNTRY_FILE=GeoLite2-Country.mmdb
-ENV GEOLITE2_ASN_FILE=GeoLite2-ASN.mmdb
-RUN if [ -z "${MAXMIND_LICENSE_KEY}" ]; then echo "MAXMIND_LICENSE_KEY" not set; exit 1; fi
-RUN curl -L -o /tmp/country.tar.gz -u ${YOUR_ACCOUNT_ID}:${MAXMIND_LICENSE_KEY} "https://download.maxmind.com/geoip/databases/GeoLite2-Country/download?suffix=tar.gz" && \
-	tar zxf /tmp/country.tar.gz --strip-components 1 -C /
-RUN curl -L -o /tmp/asn.tar.gz -u ${YOUR_ACCOUNT_ID}:${MAXMIND_LICENSE_KEY} "https://download.maxmind.com/geoip/databases/GeoLite2-ASN/download?suffix=tar.gz" && \
-	tar zxf /tmp/asn.tar.gz --strip-components 1 -C /
 
 # snmp profiles
 FROM alpine:latest as snmp
@@ -47,8 +37,8 @@ COPY --chown=ktranslate:ktranslate ${CONFIG_DIR}/ /etc/ktranslate/
 COPY --chown=ktranslate:ktranslate lib/ /etc/ktranslate/
 
 # maxmind db
-COPY --from=maxmind /GeoLite2-Country.mmdb /etc/ktranslate/
-COPY --from=maxmind /GeoLite2-ASN.mmdb /etc/ktranslate/
+COPY --from=ktranslate_base /etc/ktranslate/GeoLite2-Country.mmdb /etc/ktranslate/
+COPY --from=ktranslate_base /etc/ktranslate/GeoLite2-ASN.mmdb /etc/ktranslate/
 # snmp
 COPY --from=snmp /snmp/profiles /etc/ktranslate/profiles
 

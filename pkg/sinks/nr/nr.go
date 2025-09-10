@@ -205,7 +205,7 @@ func (s *NRSink) Init(ctx context.Context, format formats.Format, compression kt
 	if err != nil {
 		return err
 	}
-	s.Infof("New Relic sink connection confirmed good.")
+	s.Infof("[STEVE 1.1]New Relic sink connection confirmed good.")
 
 	return nil
 }
@@ -422,6 +422,7 @@ func (s *NRSink) sendLogBatch(ctx context.Context, logs []string) {
 	}
 
 	if len(ls_syslogs.Logs) > 0 {
+		ls_healthlogs.Common.Attributes["logtype"] = "network-syslog"
 		s.sendLogBatchToNR(ctx, ls_syslogs)
 	}
 
